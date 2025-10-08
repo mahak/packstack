@@ -20,12 +20,33 @@ class packstack::neutron::api ()
       })
     }
 
+    $rpc_workrers = lookup('CONFIG_NEUTRON_L2_AGENT') ? {
+      'ovn'   => 0,
+      default => lookup('CONFIG_SERVICE_WORKERS'),
+    }
+    $rpc_service_name = $rpc_workers ? {
+      0       => false,
+      default => undef,
+    }
+    $rpc_state_report_workers = lookup('CONFIG_NEUTRON_L2_AGENT') ? {
+      'ovn'   => 0,
+      default => undef,
+    }
+
+    class { 'neutron::wsgi::apache':
+      bind_host => $bind_host,
+      ssl       => false,
+      workers   => lookup('CONFIG_SERVICE_WORKERS'),
+    }
     class { 'neutron::server':
-      sync_db               => true,
-      enabled               => true,
-      api_workers           => lookup('CONFIG_SERVICE_WORKERS'),
-      rpc_workers           => lookup('CONFIG_SERVICE_WORKERS'),
-      service_providers     => lookup('SERVICE_PROVIDERS', { merge => 'unique' }),
+      sync_db                  => true,
+      enabled                  => true,
+      api_workers              => lookup('CONFIG_SERVICE_WORKERS'),
+      rpc_workers              => $rpc_workers,
+      rpc_state_report_workers => $rpc_state_report_workers,
+      api_service_name         => 'httpd',
+      rpc_service_name         => $rpc_service_name,
+      service_providers        => lookup('SERVICE_PROVIDERS', { merge => 'unique' }),
     }
 
     if $neutron_vpnaas_enabled {

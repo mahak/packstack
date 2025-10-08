@@ -271,7 +271,7 @@ def gather_host_keys(config, messages):
 
     for host in compute_hosts:
         local = utils.ScriptRunner()
-        local.append('ssh-keyscan %s' % host)
+        local.append('ssh-keyscan -q %s' % host)
         retcode, hostkey = local.execute()
         config['HOST_KEYS_%s' % host] = hostkey
 
